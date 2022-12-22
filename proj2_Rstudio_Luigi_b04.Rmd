@@ -1,0 +1,176 @@
+---
+title: "NYCDSA R Project Notebook - Luigi Balarinni 2022/12/16"
+output: html_notebook
+---
+
+```{r}
+# install.packages("shiny")
+# install.packages("rjson")
+# install.packages("Rtools")
+library(dplyr)
+library(jsonlite)
+library(tidyverse)
+library(ggplot2)
+library(jsonlite)
+library(shiny)
+library(here)
+
+setwd(here())
+result <- jsonlite::fromJSON(txt = "./Bronx.json", flatten = TRUE)
+json_bronx <- as.data.frame(result)
+df_bronx <- data.frame(sapply(json_bronx,c))
+
+result <- jsonlite::fromJSON(txt = "./Brooklyn.json")
+json_bk <- as.data.frame(result)
+df_bk <- data.frame(sapply(json_bk,c))
+
+result <- jsonlite::fromJSON(txt = "./Manhattan.json")
+json_manh <- as.data.frame(result)
+df_manh <- data.frame(sapply(json_manh,c))
+
+result <- jsonlite::fromJSON(txt = "./Queens.json")
+json_queens <- as.data.frame(result)
+df_queens <- data.frame(sapply(json_queens,c))
+
+result <- jsonlite::fromJSON(txt = "./Staten Island.json")
+json_st <- as.data.frame(result)
+df_st <- data.frame(sapply(json_st,c))
+
+```
+
+Now that all 5 boroughs have been put into dataframes. Let's make a 6th one of them all.
+
+```{r}
+df_all = data.frame(sapply(rbind(df_bronx, df_bk, df_manh, df_queens, df_st),c))
+df_all
+```
+
+Plotting Inspection Scores for All and each Borough.
+
+```{r}
+p = ggplot(df_all, aes(x=Grade)) + geom_bar() + ggtitle("All 5 Boros")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./grade_all.png", p, width=8, height=4)
+
+p = ggplot(df_bronx, aes(x=Grade)) + geom_bar() + ggtitle("Bronx")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./grade_bronx.png", p, width=8, height=4)
+
+p = ggplot(df_bk, aes(x=Grade)) + geom_bar() + ggtitle("Brooklyn")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./grade_bk.png", p, width=8, height=4)
+
+p = ggplot(df_manh, aes(x=Grade)) + geom_bar() + ggtitle("Manhattan")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./grade_MH.png", p, width=8, height=4)
+
+p = ggplot(df_queens, aes(x=Grade)) + geom_bar() + ggtitle("Queens")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./grade_queens.png", p, width=8, height=4)
+
+p = ggplot(df_st, aes(x=Grade)) + geom_bar() + ggtitle("Staten Island")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./grade_st.png", p, width=8, height=4)
+```
+
+Inspection results As of December 13th, 2022
+Note: The Restaurant inspection reports identify restaurants by their CAMIS and their violation details.
+
+```{r}
+result2 <- jsonlite::fromJSON(txt = "https://data.cityofnewyork.us/resource/43nn-pn8j.json")
+json_insp <- as.data.frame(result2)
+df_violations <- data.frame(sapply(json_insp,c))
+names(df_violations) = toupper(names(df_violations))
+df_violations <- df_violations[order(df_violations$CAMIS),] # Sort by CAMIS number, effectively, grouping them
+rownames(df_violations) <- NULL # Reset the index
+
+cols =  c("CAMIS", "Total", "Critical", "Not Critical", "Not Applicable")
+df_violations_total = data.frame( matrix(nrow =0, ncol=length(cols)))
+colnames(df_violations_total) = cols
+print(colnames(df_violations_total))
+  
+# for (i in ids_uniq) {
+#   ct_total = nrow(subset(df_violations, df_violations$CAMIS == i))
+#   ct_cr = nrow(subset(df_violations, df_violations$CAMIS == i & df_violations$CRITICAL.FLAG == "Critical"))
+#   ct_nc = nrow(subset(df_violations, df_violations$CAMIS == i & df_violations$CRITICAL.FLAG == "Not Critical"))
+#   ct_na = nrow(subset(df_violations, df_violations$CAMIS == i & df_violations$CRITICAL.FLAG == "Not Applicable"))
+#   new_row = c(i, ct_total, ct_cr, ct_nc, ct_na)
+#   df_violations_total = rbind(df_violations_total, new_row)
+#   # print(paste("CAMIS ID:", i, "has total violations of:", ct_total, "of which Critical/NC/NA are", ct_cr, ct_nc, ct_na))
+# }
+# colnames(df_violations_total) = cols
+# # write.csv(df_violations_total, "./df_violations_total.csv", row.names=FALSE)
+# df_violations_total = data.frame(read_csv(df_violations_total, "df_violations_total.csv", row.names=FALSE))
+df_violations_total$Total = as.integer(df_violations_total$Total)
+df_violations_total$Critical = as.integer(df_violations_total$Critical)
+df_violations_total$`Not Critical` = as.integer(df_violations_total$`Not Critical`)
+df_violations_total$`Not Applicable` = as.integer(df_violations_total$`Not Applicable`)
+head(df_violations_total)
+df_violations_total3 = as.data.frame(read_csv("df_violations_total.csv"))
+head(df_violations_total3)
+# df_all %>% filter(MostRecentVendingBoro == "Bronx") %>% group_by(Cuisine) %>% summarise()
+```
+
+
+
+Plotting the Distribution of violation types
+```{r}
+p = ggplot() +
+  geom_histogram(data = df_violations_total, aes(x=`Not Critical`), color="black", fill="orange", binwidth=1) +
+  geom_histogram(data = df_violations_total, aes(x=Critical), color="black", fill="red", binwidth=1) +
+  ggtitle("Critical (Red) vs Not (Orange)")
+p <- p + theme(axis.text = element_text(size = 12)) + theme(axis.title = element_text(size = 12))
+p
+ggsave("./histo_violat_crit_notCrit.png", p, width=8, height=8)
+
+p = ggplot() +
+  geom_histogram(data = df_violations_total, aes(x=Total), color="black", fill="black", binwidth=2) +
+  ggtitle("Total Number of Violations")
+ggsave("./histo_violat_total.png", p, width=8, height=8)
+
+p = ggplot() +
+  geom_histogram(data = df_violations_total, aes(x=`Not Applicable`), color="black", fill="black", binwidth=1) +
+  ggtitle("Not Applicable = Successful Inspection")
+ggsave("./histo_violat_NA.png", p, width=8, height=8)
+```
+
+Let's see a bar chart of the number of Cuisine categories.
+
+```{r}
+p = ggplot(df_all, aes(x=Cuisine)) + geom_bar()
+p = p + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+ggsave("./histo_cusines.png", p, width=12, height=4)
+```
+
+
+```{r}
+head(df_all)
+ids_uniq = unique(df_violations$CAMIS)
+ids_uniq2 = unique(df_)
+nrow(subset(df_all, df_all$Grade == "Not Yet Graded"))
+nrow(subset(df_all, df_all$Grade == "Grade Pending"))
+nrow(subset(df_all, df_all$Grade == "Closed"))
+```
+
+```{r}
+df_violations_total[order(-df_violations_total$Critical),] # Sort by CAMIS number, effectively, grouping them
+rownames(df_violations) <- NULL # Reset the index
+df_violations
+# worst_perf = subset(df_violations_total, df_violations_total$Critical >0)
+worst_perf = df_violations_total[order(-df_violations_total$Critical),]
+rownames(worst_perf) <- NULL
+worst_perf
+list_worst = worst_perf[worst_perf$CAMIS[1:20],]
+list_worst
+
+df_worst = df_all[df_all$CurrentDecalNumber %in% worst_perf$CAMIS[1:20],c('EntityName','MostRecentVendingLocation', 'MostRecentVendingBoro')]
+rownames(df_worst) <- NULL
+df_worst
+```
+

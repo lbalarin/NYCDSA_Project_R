@@ -1,0 +1,13 @@
+name: restdemo
+title: restdemo
+username:
+account: lbalarinni
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7929126
+bundleId: 6663262
+url: https://lbalarinni.shinyapps.io/restdemo/
+when: 1671680023.39939
+lastSyncTime: 1671680023.39941
+asMultiple: FALSE
+asStatic: FALSE
