@@ -54,7 +54,7 @@ json_insp <- as.data.frame(result2)
 df_insp <- data.frame(sapply(json_insp,c))
 
 # DATABASE 2
-# df_violations_total = as.data.frame(read_csv("df_violations_total.csv"))
+df_violations_total = as.data.frame(read_csv("df_violations_total.csv"))
 df_violations_total$Total = as.integer(df_violations_total$Total)
 df_violations_total$Critical = as.integer(df_violations_total$Critical)
 df_violations_total$`Not Critical` = as.integer(df_violations_total$`Not Critical`)
